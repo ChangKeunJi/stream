@@ -1,8 +1,8 @@
 import React from "react";
+import { connect } from "react-redux";
+import { signIn, signOut } from "../actions";
 
 class GoogleAuth extends React.Component {
-  state = { isSignedIn: null };
-
   // Initilaize Oauth library when this compoenent is rendered.
   componentDidMount() {
     // Variable "gapi" in Window scope.
@@ -16,14 +16,19 @@ class GoogleAuth extends React.Component {
         })
         .then(() => {
           this.auth = window.gapi.auth2.getAuthInstance();
-          this.setState({ isSignedIn: this.auth.isSignedIn.get() });
+          this.onAuthChange(this.auth.isSignedIn.get());
+          // Whenever there is a change in isSignedIn, onAuthChange gets called.
           this.auth.isSignedIn.listen(this.onAuthChange);
         });
     });
   }
 
-  onAuthChange = () => {
-    this.setState({ isSignedIn: this.auth.isSignedIn.get() });
+  onAuthChange = isSignedIn => {
+    if (isSignedIn) {
+      this.props.signIn(this.auth.currentUser.get().getId());
+    } else {
+      this.props.signOut();
+    }
   };
 
   onSignInClick = () => {
@@ -35,9 +40,9 @@ class GoogleAuth extends React.Component {
   };
 
   renderAuthButton() {
-    if (this.state.isSignedIn === null) {
+    if (this.props.isSignedIn === null) {
       return null;
-    } else if (this.state.isSignedIn) {
+    } else if (this.props.isSignedIn) {
       return (
         <button onClick={this.onSignOutClick} className="ui red google button">
           <i className="google icon" />
@@ -59,8 +64,36 @@ class GoogleAuth extends React.Component {
   }
 }
 
-export default GoogleAuth;
+const mapStateToProps = state => {
+  return { isSignedIn: state.auth.isSignedIn };
+};
 
+export default connect(mapStateToProps, { signIn, signOut })(GoogleAuth);
+
+//! this.auth vs const auth
 // By assigning to this.auth, it is available throughout
 //the class instance. If you are assigning using const auth,
 //you will need to repeat this assignment throughout the component like so:
+
+//! Connecting auth to Redux
+// Other components need to know wheter it's signed in or not
+// So, we're going to connect with Redux
+// And Google Auth component will get user status from REDUX not in component.
+
+//! Redux Flow
+// GoogleAuth Component / onAuthChange() <==> GAPI Auth2
+// => Action Creators / signIn(), signOut()
+// => Redux Store / Auth State
+// => GoogleAuth Component
+// => Action Creators
+
+//! isSignedIn.listen()
+//GoogleAuth.isSignedIn.listen(listener)
+
+//listener:
+//A function that takes a boolean value. listen() passes
+//true to this function when the user signs in, and false when the user
+//signs out.
+//this.onAuthChange is the "listener" that is passed true or false by
+//the listen() method. The reason we are not using () is because we are
+//not invoking this.onAuthChange, we are passing it as a reference.
