@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { Field, reduxForm } from "redux-form";
 import { connect } from "react-redux";
-import { createStream } from "../../apis/streams";
+import { createStream } from "../../actions/index";
 
 class StreamCreate extends Component {
   renderError({ error, touched }) {
@@ -30,9 +30,9 @@ class StreamCreate extends Component {
     );
   };
 
-  onSubmit(formValue) {
-    console.log(formValue);
-  }
+  onSubmit = formValue => {
+    this.props.createStream(formValue);
+  };
 
   render() {
     // console.log(this.props);
@@ -75,21 +75,27 @@ const validate = formValues => {
 
 // Name property of Field is connected with errors object.
 
-export default reduxForm({
+const formWrapped = reduxForm({
   form: "streamCreate",
   validate
 })(StreamCreate);
 
-// How Redux Form works?
+export default connect(null, { createStream })(formWrapped);
+
+//! How Redux Form works?
 // It takes card of all the communication between
 // Redux store and Component. Like, Action and mapStateToProps.
 
-// Field => Component itself
+//! Field => Component itself
 // reduxForm => Kind of connect function.
 // Connect between component and Redux store.
 
-// Field itself doesn't know how to display input.
+//! Field itself doesn't know how to display input.
 // So It needs component property
 
-// Field Component doesn't know what to do with label or other property.
+//! Field Component doesn't know what to do with label or other property.
 // So It just put into renderInput function as a prop
+
+//! Intentional Navigation & Programmatic Navigation
+// Intentional => User clicks on a 'Link'
+// Programmatic => Run code to forcibly navigate the user through our app
